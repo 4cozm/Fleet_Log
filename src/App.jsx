@@ -61,7 +61,7 @@ const App = () => {
 
   const chartData = useMemo(() => {
     const duration = Math.max(...Array.from(buckets.keys()));
-    const W = 1200, H = 300;
+    const W = 1200, H = 200;
     const maxVal = Math.max(...Array.from(buckets.values()).map(b => Math.max(b.out, b.in, b.rep)), 1000);
 
     const getBezier = (points) => {
@@ -87,10 +87,7 @@ const App = () => {
       pathOut: getBezier(ptsOut),
       pathIn: getBezier(ptsIn),
       pathRep: getBezier(ptsRep),
-      ptsOut, ptsIn, ptsRep,
-      width: W,
-      height: H,
-      duration
+      width: W, height: H, duration
     };
   }, [buckets]);
 
@@ -100,11 +97,11 @@ const App = () => {
     <div className="dashboard">
       <section className="stats-hero">
         <div className="stat-card card-blue">
-          <div className="stat-label">아군 투사 화력</div>
+          <div className="stat-label">평균 타격 화력</div>
           <div className="stat-value">{stats.avgOut.toLocaleString()}<span className="stat-unit">DPS</span></div>
         </div>
         <div className="stat-card card-red">
-          <div className="stat-label">적군 위협 압박</div>
+          <div className="stat-label">최고 피격 압박</div>
           <div className="stat-value">{stats.peakIn.toLocaleString()}<span className="stat-unit">PEAK</span></div>
         </div>
         <div className="stat-card card-green">
@@ -112,92 +109,98 @@ const App = () => {
           <div className="stat-value">{stats.mitigation}<span className="stat-unit">%</span></div>
         </div>
         <div className="stat-card card-cyan">
-          <div className="stat-label">격침 / 손실</div>
+          <div className="stat-label">전술 격침 / 손실</div>
           <div className="stat-value">
             <span style={{ color: 'var(--accent-blue)' }}>{stats.kills}</span>
-            <span className="stat-unit" style={{ margin: '0 4px' }}>/</span>
+            <span className="stat-unit" style={{ margin: '0 8px' }}>/</span>
             <span style={{ color: 'var(--accent-red)' }}>{stats.losses}</span>
           </div>
         </div>
       </section>
 
-      <section className="viz-section">
-        <div className="viz-header">
-          <div className="viz-title">TACTICAL ANALYSIS STREAM // React + React Flow</div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>
-            {selectedMinute !== null ? `분석 시점: T+${selectedMinute}m` : '전체 교전 양상'}
+      <main className="main-content">
+        <section className="viz-section">
+          <div className="viz-header">
+            <div className="viz-title">FORCE COMPARISON STREAM // 통합 화력 대조</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', letterSpacing: '1px' }}>
+                전투 타임라인 (클릭 시 세부 관제 모드 전환)
+            </div>
           </div>
-        </div>
 
-        <div className="chart-container" onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const min = Math.round((x / rect.width) * chartData.duration);
-            setSelectedMinute(min);
-        }}>
-          <svg className="chart-svg" viewBox={`0 0 ${chartData.width} ${chartData.height}`} preserveAspectRatio="none">
-            <line x1="0" y1="25%" x2="100%" y2="25%" className="axis-line" />
-            <line x1="0" y1="50%" x2="100%" y2="50%" className="axis-line" />
-            <line x1="0" y1="75%" x2="100%" y2="75%" className="axis-line" />
-            
-            <path d={chartData.pathIn + ` L ${chartData.width} ${chartData.height} L 0 ${chartData.height} Z`} className="pulse-area area-in" />
-            <path d={chartData.pathIn} className="pulse-path path-in" />
-            
-            <path d={chartData.pathRep + ` L ${chartData.width} ${chartData.height} L 0 ${chartData.height} Z`} className="pulse-area area-rep" style={{ fill: 'var(--accent-green)', fillOpacity: 0.1 }} />
-            <path d={chartData.pathRep} className="pulse-path path-rep" />
+          <div className="chart-container" onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const min = Math.round((x / rect.width) * chartData.duration);
+              setSelectedMinute(min);
+          }}>
+            <svg className="chart-svg" viewBox={`0 0 ${chartData.width} ${chartData.height}`} preserveAspectRatio="none">
+              <line x1="0" y1="25%" x2="100%" y2="25%" className="axis-line" />
+              <line x1="0" y1="50%" x2="100%" y2="50%" className="axis-line" />
+              <line x1="0" y1="75%" x2="100%" y2="75%" className="axis-line" />
+              
+              <path d={chartData.pathIn + ` L ${chartData.width} ${chartData.height} L 0 ${chartData.height} Z`} className="pulse-area area-in" />
+              <path d={chartData.pathIn} className="pulse-path path-in" />
+              
+              <path d={chartData.pathRep + ` L ${chartData.width} ${chartData.height} L 0 ${chartData.height} Z`} className="pulse-area area-rep" style={{ fill: 'var(--accent-green)', fillOpacity: 0.15 }} />
+              <path d={chartData.pathRep} className="pulse-path path-rep" style={{ stroke: 'var(--accent-green)', strokeWidth: 1.5 }} />
 
-            <path d={chartData.pathOut + ` L ${chartData.width} ${chartData.height} L 0 ${chartData.height} Z`} className="pulse-area area-out" />
-            <path d={chartData.pathOut} className="pulse-path path-out" />
+              <path d={chartData.pathOut + ` L ${chartData.width} ${chartData.height} L 0 ${chartData.height} Z`} className="pulse-area area-out" />
+              <path d={chartData.pathOut} className="pulse-path path-out" />
 
-            {selectedMinute !== null && (
-                <line 
-                    x1={(selectedMinute / chartData.duration) * chartData.width} 
-                    y1="0" 
-                    x2={(selectedMinute / chartData.duration) * chartData.width} 
-                    y2="100%" 
-                    className="time-cursor-line" 
-                />
-            )}
-          </svg>
-        </div>
-      </section>
+              {selectedMinute !== null && (
+                  <line 
+                      x1={(selectedMinute / chartData.duration) * chartData.width} 
+                      y1="0" 
+                      x2={(selectedMinute / chartData.duration) * chartData.width} 
+                      y2="100%" 
+                      className="time-cursor-line" 
+                  />
+              )}
+            </svg>
+          </div>
+        </section>
 
-      <div className="layout-grid">
         <section className="flow-section">
-            <div className="section-title">전술 노드 맵 (Focus Map)</div>
+            <div className="section-label">TACTICAL NODE MAP // {selectedMinute !== null ? `T+${selectedMinute}M Focus` : 'Active Network'}</div>
             <TacticalFlow logs={selectedMinute !== null ? filteredLogs : processedLogs} />
         </section>
 
         <section className="log-section">
-            <div className="section-title">데이터 로그 {selectedMinute !== null && `[T+${selectedMinute}m]`}</div>
+            <div className="viz-title" style={{ marginBottom: '15px' }}>COMBAT ARCHIVE</div>
             <div className="log-grid">
-                {filteredLogs.length > 0 ? filteredLogs.map((l, i) => {
-                    const p = l.parsed;
-                    let cardClass = p.isOut ? 'c-out' : 'c-in';
-                    if (p.type === 'rep') cardClass = 'c-rep';
-                    if (p.type === 'kill') cardClass = 'c-kill';
-                    if (p.type === 'loss') cardClass = 'c-loss';
+                {selectedMinute !== null ? (
+                    filteredLogs.map((l, i) => {
+                        const p = l.parsed;
+                        let cardClass = p.isOut ? 'c-out' : 'c-in';
+                        if (p.type === 'rep') cardClass = 'c-rep';
+                        if (p.type === 'kill') cardClass = 'c-kill';
+                        if (p.type === 'loss') cardClass = 'c-loss';
 
-                    return (
-                        <div key={i} className={`log-card ${cardClass}`}>
-                            <img src={p.icon} className="ship-img" alt="" />
-                            <div className="log-body">
-                                <div className="log-time">{l.timestamp.split(' ')[1]}</div>
-                                <div className="log-desc" dangerouslySetInnerHTML={{ __html: p.actor + " -> " + p.target }}></div>
-                            </div>
-                            {p.val > 0 && (
-                                <div className={`log-num num-${p.type === 'rep' ? 'green' : (p.isOut ? 'blue' : 'red')}`}>
-                                    {p.val.toLocaleString()}
+                        return (
+                            <div key={i} className={`log-card ${cardClass}`}>
+                                <img src={p.icon} className="ship-img" alt="" />
+                                <div className="log-body">
+                                    <div className="log-time">{l.timestamp.split(' ')[1]}</div>
+                                    <div className="log-desc" dangerouslySetInnerHTML={{ __html: `<span class="highlight">${p.actor}</span> ➔ ${p.target}` }}></div>
                                 </div>
-                            )}
-                        </div>
-                    );
-                }) : (
-                    <div className="no-data">그래프에서 분석할 시간대를 클릭하세요.</div>
+                                {p.val > 0 && (
+                                    <div className={`log-num num-${p.type === 'rep' ? 'green' : (p.isOut ? 'blue' : 'red')}`}>
+                                        {p.val.toLocaleString()}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="no-data">
+                        전술 타임라인의 특정 시점을 클릭하면<br/>
+                        해당 분의 상세 화력 배분과<br/>
+                        노드 맵이 동기화됩니다.
+                    </div>
                 )}
             </div>
         </section>
-      </div>
+      </main>
     </div>
   );
 };
